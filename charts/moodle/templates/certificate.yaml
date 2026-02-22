@@ -1,0 +1,16 @@
+{{- if and .Values.gateway.enabled .Values.gateway.tls.enabled .Values.gateway.tls.certManager.enabled }}
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: {{ include "moodle.fullname" . }}
+  labels:
+    {{- include "moodle.labels" . | nindent 4 }}
+spec:
+  secretName: {{ .Values.gateway.tls.certificateSecretName }}
+  issuerRef:
+    kind: ClusterIssuer
+    name: {{ .Values.gateway.tls.certManager.clusterIssuer }}
+  dnsNames:
+    - {{ .Values.gateway.hostname | quote }}
+{{- end }}
+

@@ -1,0 +1,62 @@
+{{- if .Values.moodle.cron.enabled }}
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: {{ include "moodle.fullname" . }}-cron
+  labels:
+    {{- include "moodle.labels" . | nindent 4 }}
+spec:
+  schedule: {{ .Values.moodle.cron.schedule | quote }}
+  concurrencyPolicy: {{ .Values.moodle.cron.concurrencyPolicy }}
+  successfulJobsHistoryLimit: {{ .Values.moodle.cron.successfulJobsHistoryLimit }}
+  failedJobsHistoryLimit: {{ .Values.moodle.cron.failedJobsHistoryLimit }}
+  jobTemplate:
+    spec:
+      template:
+        metadata:
+          labels:
+            {{- include "moodle.selectorLabels" . | nindent 12 }}
+            app.kubernetes.io/component: cron
+        spec:
+          restartPolicy: OnFailure
+          serviceAccountName: {{ include "moodle.serviceAccountName" . }}
+          containers:
+            - name: moodle-cron
+              image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+              imagePullPolicy: {{ .Values.image.pullPolicy }}
+              command:
+                - /bin/sh
+                - -ec
+                - |
+                  php admin/cli/cron.php
+              envFrom:
+                - configMapRef:
+                    name: {{ include "moodle.fullname" . }}-env
+              env:
+                - name: MOODLE_DB_HOST
+                  valueFrom:
+                    secretKeyRef:
+                      name: {{ .Values.postgresql.secretRef.name }}
+                      key: {{ .Values.postgresql.secretRef.hostKey }}
+                - name: MOODLE_DB_PORT
+                  valueFrom:
+                    secretKeyRef:
+                      name: {{ .Values.postgresql.secretRef.name }}
+                      key: {{ .Values.postgresql.secretRef.portKey }}
+                - name: MOODLE_DB_NAME
+                  valueFrom:
+                    secretKeyRef:
+                      name: {{ .Values.postgresql.secretRef.name }}
+                      key: {{ .Values.postgresql.secretRef.databaseKey }}
+                - name: MOODLE_DB_USER
+                  valueFrom:
+                    secretKeyRef:
+                      name: {{ .Values.postgresql.secretRef.name }}
+                      key: {{ .Values.postgresql.secretRef.userKey }}
+                - name: MOODLE_DB_PASSWORD
+                  valueFrom:
+                    secretKeyRef:
+                      name: {{ .Values.postgresql.secretRef.name }}
+                      key: {{ .Values.postgresql.secretRef.passwordKey }}
+{{- end }}
+

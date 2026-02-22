@@ -1,0 +1,82 @@
+{{- if .Values.backups.enabled }}
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: {{ include "moodle.fullname" . }}-backup-pgdump
+  labels:
+    {{- include "moodle.labels" . | nindent 4 }}
+    app.kubernetes.io/component: backup
+spec:
+  schedule: {{ .Values.backups.pgdump.schedule | quote }}
+  successfulJobsHistoryLimit: {{ .Values.backups.pgdump.successfulJobsHistoryLimit }}
+  failedJobsHistoryLimit: {{ .Values.backups.pgdump.failedJobsHistoryLimit }}
+  jobTemplate:
+    spec:
+      template:
+        metadata:
+          labels:
+            {{- include "moodle.selectorLabels" . | nindent 12 }}
+            app.kubernetes.io/component: backup
+        spec:
+          restartPolicy: OnFailure
+          containers:
+            - name: pgdump
+              image: {{ .Values.backups.pgdump.image | quote }}
+              command:
+                - /bin/sh
+                - -ec
+                - |
+                  TS="$(date +%Y%m%d-%H%M%S)"
+                  export PGPASSWORD="$DB_PASSWORD"
+                  pg_dump -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" -d "$DB_NAME" -F c > /tmp/${DB_NAME}-${TS}.dump
+                  aws s3 cp /tmp/${DB_NAME}-${TS}.dump s3://$BACKUP_BUCKET/postgresql/${DB_NAME}-${TS}.dump --endpoint-url "$SPACES_ENDPOINT"
+                  aws s3 ls s3://$BACKUP_BUCKET/postgresql/ --endpoint-url "$SPACES_ENDPOINT" | awk '{print $4}' | while read -r f; do
+                    [ -z "$f" ] && continue
+                    if [ "$(date -d "-${RETENTION_DAYS} days" +%s)" -ge "$(date +%s)" ]; then :; fi
+                  done
+              env:
+                - name: DB_HOST
+                  valueFrom:
+                    secretKeyRef:
+                      name: {{ .Values.postgresql.secretRef.name }}
+                      key: {{ .Values.postgresql.secretRef.hostKey }}
+                - name: DB_PORT
+                  valueFrom:
+                    secretKeyRef:
+                      name: {{ .Values.postgresql.secretRef.name }}
+                      key: {{ .Values.postgresql.secretRef.portKey }}
+                - name: DB_NAME
+                  valueFrom:
+                    secretKeyRef:
+                      name: {{ .Values.postgresql.secretRef.name }}
+                      key: {{ .Values.postgresql.secretRef.databaseKey }}
+                - name: DB_USER
+                  valueFrom:
+                    secretKeyRef:
+                      name: {{ .Values.postgresql.secretRef.name }}
+                      key: {{ .Values.postgresql.secretRef.userKey }}
+                - name: DB_PASSWORD
+                  valueFrom:
+                    secretKeyRef:
+                      name: {{ .Values.postgresql.secretRef.name }}
+                      key: {{ .Values.postgresql.secretRef.passwordKey }}
+                - name: BACKUP_BUCKET
+                  value: {{ .Values.spaces.backupBucket | quote }}
+                - name: SPACES_ENDPOINT
+                  value: {{ include "moodle.spacesEndpointUrl" . | quote }}
+                - name: AWS_ACCESS_KEY_ID
+                  valueFrom:
+                    secretKeyRef:
+                      name: {{ .Values.spaces.credentialsSecret.name }}
+                      key: {{ .Values.spaces.credentialsSecret.accessKeyKey }}
+                - name: AWS_SECRET_ACCESS_KEY
+                  valueFrom:
+                    secretKeyRef:
+                      name: {{ .Values.spaces.credentialsSecret.name }}
+                      key: {{ .Values.spaces.credentialsSecret.secretKeyKey }}
+                - name: AWS_DEFAULT_REGION
+                  value: {{ .Values.spaces.region | quote }}
+                - name: RETENTION_DAYS
+                  value: {{ .Values.backups.retentionDays | quote }}
+{{- end }}
+

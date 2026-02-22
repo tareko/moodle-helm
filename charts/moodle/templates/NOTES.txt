@@ -1,0 +1,18 @@
+Moodle has been deployed.
+
+Release: {{ .Release.Name }}
+Namespace: {{ .Release.Namespace }}
+Hostname: {{ .Values.gateway.hostname }}
+
+1. Confirm gateway route and DNS:
+   kubectl get httproute {{ include "moodle.fullname" . }} -n {{ .Release.Namespace }}
+
+2. Confirm certificate:
+   kubectl get certificate {{ include "moodle.fullname" . }} -n {{ .Release.Namespace }}
+
+3. Confirm pods:
+   kubectl get pods -l app.kubernetes.io/instance={{ .Release.Name }} -n {{ .Release.Namespace }}
+
+4. Validate cron and backups:
+   kubectl get cronjobs -n {{ .Release.Namespace }}
+

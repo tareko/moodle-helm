@@ -1,0 +1,133 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "moodle.fullname" . }}
+  labels:
+    {{- include "moodle.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  strategy:
+    {{- toYaml .Values.updateStrategy | nindent 4 }}
+  selector:
+    matchLabels:
+      {{- include "moodle.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "moodle.selectorLabels" . | nindent 8 }}
+        {{- with .Values.podLabels }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+      {{- with .Values.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+    spec:
+      serviceAccountName: {{ include "moodle.serviceAccountName" . }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      containers:
+        - name: moodle
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          ports:
+            - name: http
+              containerPort: 8080
+              protocol: TCP
+          envFrom:
+            - configMapRef:
+                name: {{ include "moodle.fullname" . }}-env
+          env:
+            - name: MOODLE_DB_HOST
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.postgresql.secretRef.name }}
+                  key: {{ .Values.postgresql.secretRef.hostKey }}
+            - name: MOODLE_DB_PORT
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.postgresql.secretRef.name }}
+                  key: {{ .Values.postgresql.secretRef.portKey }}
+            - name: MOODLE_DB_NAME
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.postgresql.secretRef.name }}
+                  key: {{ .Values.postgresql.secretRef.databaseKey }}
+            - name: MOODLE_DB_USER
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.postgresql.secretRef.name }}
+                  key: {{ .Values.postgresql.secretRef.userKey }}
+            - name: MOODLE_DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.postgresql.secretRef.name }}
+                  key: {{ .Values.postgresql.secretRef.passwordKey }}
+            - name: MOODLE_ADMIN_USERNAME
+              value: {{ .Values.moodle.admin.user | quote }}
+            - name: MOODLE_ADMIN_EMAIL
+              value: {{ .Values.moodle.admin.email | quote }}
+            - name: MOODLE_ADMIN_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.moodle.admin.secretRef.name }}
+                  key: {{ .Values.moodle.admin.secretRef.passwordKey }}
+            {{- if and .Values.spaces.enabled (eq .Values.storage.filedir.driver "s3") }}
+            - name: MOODLE_OBJECTFS_S3_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.spaces.credentialsSecret.name }}
+                  key: {{ .Values.spaces.credentialsSecret.accessKeyKey }}
+            - name: MOODLE_OBJECTFS_S3_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.spaces.credentialsSecret.name }}
+                  key: {{ .Values.spaces.credentialsSecret.secretKeyKey }}
+            {{- end }}
+            {{- with .Values.env.extra }}
+            {{- toYaml . | nindent 12 }}
+            {{- end }}
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+          startupProbe:
+            httpGet:
+              path: /
+              port: http
+            initialDelaySeconds: {{ .Values.probes.startup.initialDelaySeconds }}
+            periodSeconds: {{ .Values.probes.startup.periodSeconds }}
+            failureThreshold: {{ .Values.probes.startup.failureThreshold }}
+          livenessProbe:
+            httpGet:
+              path: /login/index.php
+              port: http
+            initialDelaySeconds: {{ .Values.probes.liveness.initialDelaySeconds }}
+            periodSeconds: {{ .Values.probes.liveness.periodSeconds }}
+            timeoutSeconds: {{ .Values.probes.liveness.timeoutSeconds }}
+            failureThreshold: {{ .Values.probes.liveness.failureThreshold }}
+          readinessProbe:
+            httpGet:
+              path: /login/index.php
+              port: http
+            initialDelaySeconds: {{ .Values.probes.readiness.initialDelaySeconds }}
+            periodSeconds: {{ .Values.probes.readiness.periodSeconds }}
+            timeoutSeconds: {{ .Values.probes.readiness.timeoutSeconds }}
+            failureThreshold: {{ .Values.probes.readiness.failureThreshold }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+

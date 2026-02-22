@@ -1,0 +1,24 @@
+{{- if and .Values.gateway.enabled .Values.gateway.create }}
+apiVersion: gateway.networking.k8s.io/v1
+kind: Gateway
+metadata:
+  name: {{ .Values.gateway.gatewayName }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "moodle.labels" . | nindent 4 }}
+spec:
+  gatewayClassName: {{ .Values.gateway.className }}
+  listeners:
+    - name: {{ .Values.gateway.listenerName }}
+      hostname: {{ .Values.gateway.hostname | quote }}
+      protocol: HTTPS
+      port: 443
+      tls:
+        mode: Terminate
+        certificateRefs:
+          - kind: Secret
+            name: {{ .Values.gateway.tls.certificateSecretName }}
+      allowedRoutes:
+        namespaces:
+          from: Same
+{{- end }}

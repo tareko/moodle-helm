@@ -1,0 +1,96 @@
+{
+  "$schema": "https://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "properties": {
+    "image": {
+      "type": "object",
+      "properties": {
+        "repository": { "type": "string", "minLength": 1 },
+        "tag": { "type": "string", "minLength": 1 },
+        "pullPolicy": { "type": "string" }
+      },
+      "required": ["repository", "tag"]
+    },
+    "postgresql": {
+      "type": "object",
+      "properties": {
+        "external": { "type": "boolean" },
+        "sslmode": { "type": "string" },
+        "secretRef": {
+          "type": "object",
+          "properties": {
+            "name": { "type": "string", "minLength": 1 },
+            "hostKey": { "type": "string", "minLength": 1 },
+            "portKey": { "type": "string", "minLength": 1 },
+            "databaseKey": { "type": "string", "minLength": 1 },
+            "userKey": { "type": "string", "minLength": 1 },
+            "passwordKey": { "type": "string", "minLength": 1 }
+          },
+          "required": ["name", "hostKey", "portKey", "databaseKey", "userKey", "passwordKey"]
+        }
+      },
+      "required": ["external", "secretRef"]
+    },
+    "spaces": {
+      "type": "object",
+      "properties": {
+        "enabled": { "type": "boolean" },
+        "endpoint": { "type": "string", "minLength": 1 },
+        "region": { "type": "string", "minLength": 1 },
+        "bucket": { "type": "string", "minLength": 1 },
+        "backupBucket": { "type": "string", "minLength": 1 },
+        "credentialsSecret": {
+          "type": "object",
+          "properties": {
+            "name": { "type": "string", "minLength": 1 },
+            "accessKeyKey": { "type": "string", "minLength": 1 },
+            "secretKeyKey": { "type": "string", "minLength": 1 }
+          },
+          "required": ["name", "accessKeyKey", "secretKeyKey"]
+        }
+      },
+      "required": ["enabled", "endpoint", "region", "bucket", "backupBucket", "credentialsSecret"]
+    },
+    "gateway": {
+      "type": "object",
+      "properties": {
+        "enabled": { "type": "boolean" },
+        "className": { "type": "string", "minLength": 1 },
+        "gatewayName": { "type": "string", "minLength": 1 },
+        "gatewayNamespace": { "type": "string", "minLength": 1 },
+        "listenerName": { "type": "string", "minLength": 1 },
+        "hostname": { "type": "string", "minLength": 1 }
+      },
+      "required": ["enabled", "className", "gatewayName", "gatewayNamespace", "listenerName", "hostname"]
+    },
+    "redis": {
+      "type": "object",
+      "properties": {
+        "enabled": { "type": "boolean" }
+      },
+      "required": ["enabled"]
+    },
+    "moodle": {
+      "type": "object",
+      "properties": {
+        "cron": {
+          "type": "object",
+          "properties": {
+            "enabled": { "type": "boolean" },
+            "schedule": { "type": "string", "minLength": 1 }
+          },
+          "required": ["enabled", "schedule"]
+        }
+      }
+    },
+    "backups": {
+      "type": "object",
+      "properties": {
+        "enabled": { "type": "boolean" },
+        "retentionDays": { "type": "integer", "minimum": 1 }
+      },
+      "required": ["enabled", "retentionDays"]
+    }
+  },
+  "required": ["image", "postgresql", "spaces", "gateway", "redis", "moodle", "backups"]
+}

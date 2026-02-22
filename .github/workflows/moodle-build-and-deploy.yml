@@ -1,0 +1,111 @@
+name: Moodle Build and Deploy
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'charts/moodle/**'
+      - 'docker/**'
+      - '.github/workflows/moodle-build-and-deploy.yml'
+  workflow_dispatch:
+    inputs:
+      moodle_version:
+        description: Moodle version/tag to embed in image labels
+        required: false
+        default: 'latest-stable'
+
+permissions:
+  contents: read
+  packages: write
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository_owner }}/moodle
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    outputs:
+      image_tag: ${{ steps.meta.outputs.version }}
+      image_repo: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract image metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=sha,prefix=sha-
+            type=ref,event=branch
+            type=raw,value=latest,enable={{is_default_branch}}
+          labels: |
+            org.opencontainers.image.title=Moodle
+            org.opencontainers.image.description=Production Moodle image built from repository
+            org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
+            org.opencontainers.image.version=${{ github.event.inputs.moodle_version || 'latest-stable' }}
+
+      - name: Build and push image
+        uses: docker/build-push-action@v6
+        with:
+          context: ./docker
+          file: ./docker/Dockerfile
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+
+  deploy:
+    needs: build-and-push
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up kubectl
+        uses: azure/setup-kubectl@v4
+
+      - name: Set up Helm
+        uses: azure/setup-helm@v4
+
+      - name: Configure kubeconfig
+        shell: bash
+        run: |
+          mkdir -p "${HOME}/.kube"
+          echo "${KUBECONFIG_B64}" | base64 -d > "${HOME}/.kube/config"
+          chmod 600 "${HOME}/.kube/config"
+        env:
+          KUBECONFIG_B64: ${{ secrets.KUBECONFIG_B64 }}
+
+      - name: Helm upgrade/install
+        shell: bash
+        run: |
+          helm upgrade --install "${HELM_RELEASE_NAME}" ./charts/moodle \
+            --namespace "${K8S_NAMESPACE}" \
+            --create-namespace \
+            --values ./charts/moodle/values-doks-example.yaml \
+            --set image.repository="${IMAGE_REPOSITORY}" \
+            --set image.tag="${IMAGE_TAG}" \
+            --wait --timeout 15m
+        env:
+          HELM_RELEASE_NAME: ${{ vars.HELM_RELEASE_NAME || 'moodle' }}
+          K8S_NAMESPACE: ${{ vars.K8S_NAMESPACE || 'moodle' }}
+          IMAGE_REPOSITORY: ${{ needs.build-and-push.outputs.image_repo }}
+          IMAGE_TAG: ${{ needs.build-and-push.outputs.image_tag }}
+

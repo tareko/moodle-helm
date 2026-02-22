@@ -1,0 +1,168 @@
+replicaCount: 2
+
+image:
+  repository: ghcr.io/your-org/moodle
+  # Set to a specific stable Moodle-based image tag in production.
+  # Keep configurable to allow rollbacks/upgrades by values override.
+  tag: "4.5.0"
+  pullPolicy: IfNotPresent
+
+imagePullSecrets: []
+nameOverride: ""
+fullnameOverride: ""
+
+serviceAccount:
+  create: true
+  annotations: {}
+  name: ""
+
+podAnnotations: {}
+podLabels: {}
+
+podSecurityContext:
+  fsGroup: 33
+
+securityContext:
+  runAsNonRoot: true
+  runAsUser: 33
+  runAsGroup: 33
+  allowPrivilegeEscalation: false
+  readOnlyRootFilesystem: false
+
+service:
+  type: ClusterIP
+  port: 80
+
+resources:
+  requests:
+    cpu: 300m
+    memory: 512Mi
+  limits:
+    cpu: "1"
+    memory: 2Gi
+
+probes:
+  startup:
+    initialDelaySeconds: 30
+    periodSeconds: 10
+    failureThreshold: 30
+  liveness:
+    initialDelaySeconds: 60
+    periodSeconds: 20
+    timeoutSeconds: 5
+    failureThreshold: 6
+  readiness:
+    initialDelaySeconds: 20
+    periodSeconds: 10
+    timeoutSeconds: 5
+    failureThreshold: 6
+
+nodeSelector: {}
+tolerations: []
+affinity: {}
+
+env:
+  extra: []
+
+storage:
+  filedir:
+    # local | s3
+    driver: s3
+    localDataPath: /var/moodledata
+
+spaces:
+  enabled: true
+  endpoint: nyc3.digitaloceanspaces.com
+  region: us-east-1
+  bucket: moodle-files
+  backupBucket: moodle-backups
+  usePathStyle: false
+  credentialsSecret:
+    name: moodle-spaces-credentials
+    accessKeyKey: access-key-id
+    secretKeyKey: secret-access-key
+
+postgresql:
+  external: true
+  secretRef:
+    name: moodle-postgresql
+    hostKey: host
+    portKey: port
+    databaseKey: database
+    userKey: username
+    passwordKey: password
+  sslmode: require
+
+redis:
+  enabled: true
+  architecture: standalone
+  image:
+    repository: redis
+    tag: "7.4-alpine"
+    pullPolicy: IfNotPresent
+  service:
+    port: 6379
+  resources:
+    requests:
+      cpu: 50m
+      memory: 128Mi
+    limits:
+      cpu: 300m
+      memory: 256Mi
+
+moodle:
+  admin:
+    user: admin
+    email: admin@example.com
+    secretRef:
+      name: moodle-admin
+      passwordKey: password
+  site:
+    fullname: Moodle
+    shortname: Moodle
+  php:
+    memoryLimit: 512M
+    maxExecutionTime: 300
+  cron:
+    enabled: true
+    schedule: "*/1 * * * *"
+    concurrencyPolicy: Forbid
+    successfulJobsHistoryLimit: 2
+    failedJobsHistoryLimit: 3
+
+gateway:
+  enabled: true
+  create: false
+  className: nginx
+  gatewayName: moodle-gateway
+  listenerName: https
+  # Namespace where the Gateway resource exists. Often "default" or ingress namespace.
+  gatewayNamespace: default
+  hostname: moodle.example.com
+  tls:
+    enabled: true
+    certificateSecretName: moodle-tls
+    certManager:
+      enabled: true
+      clusterIssuer: letsencrypt-prod
+
+backups:
+  enabled: true
+  timezone: UTC
+  retentionDays: 14
+  pgdump:
+    schedule: "15 2 * * *"
+    image: alpine:3.20
+    successfulJobsHistoryLimit: 3
+    failedJobsHistoryLimit: 3
+  moodleFiles:
+    schedule: "45 2 * * *"
+    image: amazon/aws-cli:2.22.35
+    successfulJobsHistoryLimit: 3
+    failedJobsHistoryLimit: 3
+
+updateStrategy:
+  type: RollingUpdate
+  rollingUpdate:
+    maxUnavailable: 0
+    maxSurge: 1

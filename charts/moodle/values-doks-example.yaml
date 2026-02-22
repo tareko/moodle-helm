@@ -1,0 +1,50 @@
+image:
+  repository: ghcr.io/your-org/moodle
+  tag: "4.5.0"
+
+gateway:
+  enabled: true
+  className: nginx
+  gatewayName: public-gateway
+  gatewayNamespace: ingress-nginx
+  hostname: moodle.example.com
+  tls:
+    enabled: true
+    certificateSecretName: moodle-tls
+    certManager:
+      enabled: true
+      clusterIssuer: letsencrypt-prod
+
+postgresql:
+  external: true
+  secretRef:
+    name: moodle-postgresql
+    hostKey: host
+    portKey: port
+    databaseKey: database
+    userKey: username
+    passwordKey: password
+  sslmode: require
+
+spaces:
+  enabled: true
+  endpoint: nyc3.digitaloceanspaces.com
+  region: us-east-1
+  bucket: moodle-files
+  backupBucket: moodle-backups
+  credentialsSecret:
+    name: moodle-spaces-credentials
+    accessKeyKey: access-key-id
+    secretKeyKey: secret-access-key
+
+redis:
+  enabled: true
+
+moodle:
+  admin:
+    user: admin
+    email: admin@example.com
+    secretRef:
+      name: moodle-admin
+      passwordKey: password
+
