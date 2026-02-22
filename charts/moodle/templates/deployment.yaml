@@ -34,20 +34,11 @@ spec:
         - name: moodle
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
-          command:
-            - /bin/sh
-            - -ec
-            - |
-              sed -ri 's!Listen 80!Listen 8080!g' /etc/apache2/ports.conf
-              sed -ri 's!<VirtualHost \*:80>!<VirtualHost *:8080>!g' /etc/apache2/sites-available/*.conf
-              printf 'ServerName localhost\n' > /etc/apache2/conf-available/servername.conf
-              a2enconf servername
-              exec apache2-foreground
           securityContext:
             {{- toYaml .Values.securityContext | nindent 12 }}
           ports:
             - name: http
-              containerPort: 8080
+              containerPort: 80
               protocol: TCP
           envFrom:
             - configMapRef:
