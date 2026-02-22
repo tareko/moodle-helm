@@ -28,6 +28,9 @@ securityContext:
   runAsGroup: 33
   allowPrivilegeEscalation: false
   readOnlyRootFilesystem: false
+  capabilities:
+    add:
+      - NET_BIND_SERVICE
 
 service:
   type: ClusterIP
