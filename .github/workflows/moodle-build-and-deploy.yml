@@ -85,17 +85,9 @@ jobs:
         uses: azure/setup-helm@v4
 
       - name: Install doctl
-        shell: bash
-        run: |
-          DOCTL_VERSION="v1.124.0"
-          curl -fsSL "https://github.com/digitalocean/doctl/releases/download/${DOCTL_VERSION}/doctl-${DOCTL_VERSION}-linux-amd64.tar.gz" -o /tmp/doctl.tgz
-          tar -xzf /tmp/doctl.tgz -C /tmp
-          sudo mv /tmp/doctl /usr/local/bin/doctl
-          doctl version
-          doctl auth init -t "${DIGITALOCEAN_ACCESS_TOKEN}"
-          command -v doctl
-        env:
-          DIGITALOCEAN_ACCESS_TOKEN: ${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}
+        uses: digitalocean/action-doctl@v2
+        with:
+          token: ${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}
 
       - name: Configure kubeconfig
         shell: bash
