@@ -51,6 +51,28 @@ kubectl -n moodle create secret generic moodle-admin \
 ## Required GitHub secrets
 
 - `KUBECONFIG_B64`: base64-encoded kubeconfig for your DOKS cluster
+- `DIGITALOCEAN_ACCESS_TOKEN`: token used to install/auth `doctl` for exec-based kubeconfig auth in CI
+
+### How to create `DIGITALOCEAN_ACCESS_TOKEN`
+
+1. Log in to DigitalOcean.
+2. Open **API** from the control panel.
+3. Under **Personal access tokens**, click **Generate New Token**.
+4. Name it (for example: `github-actions-moodle-deploy`).
+5. Scope selection (least privilege):
+   - If your account shows fine-grained scopes, enable **Kubernetes (read)** only.
+   - If DigitalOcean UI requires broader legacy token scopes, use **Read** + **Write**.
+   - If CI still fails to fetch exec credentials, add broader Kubernetes/cluster scope temporarily, then tighten back.
+6. Copy the token once (you will not be able to view it again).
+
+Why this scope: this workflow only needs `doctl` available for kubeconfig exec-auth during [`Helm upgrade`](.github/workflows/moodle-build-and-deploy.yml:99), so read access to cluster metadata is typically enough.
+
+Add it to GitHub:
+
+- Repository → **Settings** → **Secrets and variables** → **Actions**
+- **New repository secret**
+- Name: `DIGITALOCEAN_ACCESS_TOKEN`
+- Value: paste the token
 
 ### How to create `KUBECONFIG_B64`
 
