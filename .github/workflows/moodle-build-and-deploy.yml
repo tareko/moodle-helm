@@ -104,7 +104,7 @@ jobs:
           helm upgrade --install "${HELM_RELEASE_NAME}" ./charts/moodle \
             --namespace "${K8S_NAMESPACE}" \
             --create-namespace \
-            --values ./charts/moodle/values-doks-example.yaml \
+            --values ./charts/moodle/values-glia.yaml \
             --set image.repository="${IMAGE_REPOSITORY}" \
             --set image.tag="${IMAGE_TAG}" \
             --wait --timeout 15m
