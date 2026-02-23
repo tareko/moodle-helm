@@ -1,0 +1,42 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "moodle.fullname" . }}-config
+  labels:
+    {{- include "moodle.labels" . | nindent 4 }}
+data:
+  config.php: |
+    <?php
+    unset($CFG);
+    global $CFG;
+    $CFG = new stdClass();
+
+    $CFG->dbtype    = getenv('MOODLE_DB_TYPE') ?: 'pgsql';
+    $CFG->dblibrary = 'native';
+    $CFG->dbhost    = getenv('MOODLE_DB_HOST') ?: 'localhost';
+    $CFG->dbname    = getenv('MOODLE_DB_NAME') ?: 'moodle';
+    $CFG->dbuser    = getenv('MOODLE_DB_USER') ?: 'moodle';
+    $CFG->dbpass    = getenv('MOODLE_DB_PASSWORD') ?: '';
+    $CFG->prefix    = 'mdl_';
+    $CFG->dboptions = array(
+      'dbpersist' => 0,
+      'dbport' => getenv('MOODLE_DB_PORT') ?: '',
+      'dbsocket' => '',
+      'dbcollation' => 'utf8mb4_unicode_ci',
+      'sslmode' => getenv('MOODLE_DB_SSLMODE') ?: 'require',
+    );
+
+    $CFG->wwwroot   = getenv('MOODLE_URL') ?: 'http://localhost';
+    $CFG->dataroot  = '/tmp/moodledata';
+    $CFG->admin     = 'admin';
+
+    if (!is_dir($CFG->dataroot)) {
+      @mkdir($CFG->dataroot, 0770, true);
+    }
+
+    if (filter_var(getenv('MOODLE_SSLPROXY') ?: 'false', FILTER_VALIDATE_BOOLEAN)) {
+      $CFG->sslproxy = true;
+      $CFG->reverseproxy = true;
+    }
+
+    require_once(__DIR__ . '/lib/setup.php');

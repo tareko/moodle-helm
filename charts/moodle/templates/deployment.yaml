@@ -126,7 +126,7 @@ spec:
       volumes:
         - name: moodle-config
           configMap:
-            name: {{ include "moodle.fullname" . }}-env
+            name: {{ include "moodle.fullname" . }}-config
             items:
               - key: config.php
                 path: config.php
