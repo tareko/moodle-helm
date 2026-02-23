@@ -20,9 +20,11 @@ ENV APACHE_DOCUMENT_ROOT=/var/www/html
 
 RUN sed -ri -e 's!/var/www/html!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/sites-available/*.conf \
     && sed -ri -e 's!/var/www/!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/apache2.conf /etc/apache2/conf-available/*.conf \
-    && sed -ri -e 's!Listen 80!Listen 8080!g' /etc/apache2/ports.conf \
-    && sed -ri -e 's!<VirtualHost \*:80>!<VirtualHost *:8080>!g' /etc/apache2/sites-available/*.conf \
+    && sed -ri -e 's!^\s*Listen\s+80\s*$!Listen 8080!g' /etc/apache2/ports.conf \
+    && sed -ri -e 's!<VirtualHost \*:80>!<VirtualHost *:8080>!g' /etc/apache2/sites-available/*.conf /etc/apache2/sites-enabled/*.conf \
     && printf 'ServerName localhost\n' > /etc/apache2/conf-available/servername.conf \
     && a2enconf servername
+
+USER 33:33
 
 EXPOSE 8080

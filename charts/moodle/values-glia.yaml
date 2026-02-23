@@ -1,6 +1,7 @@
 image:
   repository: ghcr.io/your-org/moodle
   tag: "5.1.3"
+  pullPolicy: Always
 
 gateway:
   enabled: true

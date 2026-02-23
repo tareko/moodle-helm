@@ -34,17 +34,6 @@ spec:
         - name: moodle
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
-          command:
-            - /bin/sh
-            - -ec
-          args:
-            - |
-              sed -ri -e 's!^\s*Listen\s+80\s*$!Listen {{ .Values.service.targetPort }}!g' /etc/apache2/ports.conf
-              sed -ri -e 's!<VirtualHost \*:80>!<VirtualHost *:{{ .Values.service.targetPort }}>!g' /etc/apache2/sites-available/*.conf
-              sed -ri -e 's!<VirtualHost \*:80>!<VirtualHost *:{{ .Values.service.targetPort }}>!g' /etc/apache2/sites-enabled/*.conf || true
-              printf 'ServerName localhost\n' > /etc/apache2/conf-available/servername.conf
-              a2enconf servername
-              exec apache2-foreground
           securityContext:
             {{- toYaml .Values.securityContext | nindent 12 }}
           ports:
