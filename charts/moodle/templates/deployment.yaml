@@ -118,6 +118,18 @@ spec:
             periodSeconds: {{ .Values.probes.readiness.periodSeconds }}
             timeoutSeconds: {{ .Values.probes.readiness.timeoutSeconds }}
             failureThreshold: {{ .Values.probes.readiness.failureThreshold }}
+          volumeMounts:
+            - name: moodle-config
+              mountPath: /var/www/html/config.php
+              subPath: config.php
+              readOnly: true
+      volumes:
+        - name: moodle-config
+          configMap:
+            name: {{ include "moodle.fullname" . }}-env
+            items:
+              - key: config.php
+                path: config.php
       {{- with .Values.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}

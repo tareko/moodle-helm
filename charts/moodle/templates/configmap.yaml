@@ -22,4 +22,54 @@ data:
   {{- end }}
   PHP_MEMORY_LIMIT: {{ .Values.moodle.php.memoryLimit | quote }}
   PHP_MAX_EXECUTION_TIME: {{ .Values.moodle.php.maxExecutionTime | quote }}
+  config.php: |
+    <?php
+    unset($CFG);
+    global $CFG;
+    $CFG = new stdClass();
 
+    $CFG->dbtype    = getenv('MOODLE_DB_TYPE') ?: 'pgsql';
+    $CFG->dblibrary = 'native';
+    $CFG->dbhost    = getenv('MOODLE_DB_HOST') ?: 'localhost';
+    $CFG->dbname    = getenv('MOODLE_DB_NAME') ?: 'moodle';
+    $CFG->dbuser    = getenv('MOODLE_DB_USER') ?: 'moodle';
+    $CFG->dbpass    = getenv('MOODLE_DB_PASSWORD') ?: '';
+    $CFG->prefix    = 'mdl_';
+    $CFG->dboptions = array(
+      'dbpersist' => 0,
+      'dbport' => getenv('MOODLE_DB_PORT') ?: '',
+      'dbsocket' => '',
+      'dbcollation' => 'utf8mb4_unicode_ci',
+      'sslmode' => getenv('MOODLE_DB_SSLMODE') ?: 'require',
+    );
+
+    $CFG->wwwroot   = getenv('MOODLE_URL') ?: 'http://localhost';
+    $CFG->dataroot  = '/tmp/moodledata';
+    $CFG->admin     = 'admin';
+
+    if (!is_dir($CFG->dataroot)) {
+      @mkdir($CFG->dataroot, 0770, true);
+    }
+
+    if (filter_var(getenv('MOODLE_SSLPROXY') ?: 'false', FILTER_VALIDATE_BOOLEAN)) {
+      $CFG->sslproxy = true;
+      $CFG->reverseproxy = true;
+    }
+
+    if (getenv('MOODLE_REDIS_HOST')) {
+      $CFG->session_handler_class = '\\core\\session\\redis';
+      $CFG->session_redis_host = getenv('MOODLE_REDIS_HOST');
+      $CFG->session_redis_port = (int)(getenv('MOODLE_REDIS_PORT') ?: 6379);
+    }
+
+    if (filter_var(getenv('MOODLE_OBJECTFS_ENABLED') ?: 'false', FILTER_VALIDATE_BOOLEAN)) {
+      $CFG->alternative_file_system_class = '\\tool_objectfs\\local\\store\\s3_file_system';
+      $CFG->tool_objectfs_s3_region = getenv('MOODLE_OBJECTFS_S3_REGION') ?: '';
+      $CFG->tool_objectfs_s3_bucket = getenv('MOODLE_OBJECTFS_S3_BUCKET') ?: '';
+      $CFG->tool_objectfs_s3_key = getenv('MOODLE_OBJECTFS_S3_KEY') ?: '';
+      $CFG->tool_objectfs_s3_secret = getenv('MOODLE_OBJECTFS_S3_SECRET') ?: '';
+      $CFG->tool_objectfs_s3_endpoint = getenv('MOODLE_OBJECTFS_S3_ENDPOINT') ?: '';
+      $CFG->tool_objectfs_s3_path_style = filter_var(getenv('MOODLE_OBJECTFS_S3_PATH_STYLE') ?: 'false', FILTER_VALIDATE_BOOLEAN);
+    }
+
+    require_once(__DIR__ . '/lib/setup.php');
