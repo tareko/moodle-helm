@@ -28,7 +28,12 @@ spec:
                 - /bin/sh
                 - -ec
                 - |
-                  php admin/cli/cron.php
+                  cd /var/www/html
+                  if [ ! -f ./config.php ]; then
+                    echo "Skipping cron: /var/www/html/config.php is missing"
+                    exit 0
+                  fi
+                  php ./admin/cli/cron.php
               envFrom:
                 - configMapRef:
                     name: {{ include "moodle.fullname" . }}-env
