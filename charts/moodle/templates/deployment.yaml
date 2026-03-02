@@ -43,6 +43,15 @@ spec:
           envFrom:
             - configMapRef:
                 name: {{ include "moodle.fullname" . }}-env
+          command:
+            - /bin/sh
+            - -ec
+            - |
+              if ! php -m | grep -qi '^pgsql$'; then
+                echo "Installing missing pgsql PHP extension at container startup"
+                docker-php-ext-install -j"$(nproc)" pgsql
+              fi
+              exec apache2-foreground
           env:
             - name: MOODLE_DB_HOST
               valueFrom:
@@ -120,7 +129,7 @@ spec:
             failureThreshold: {{ .Values.probes.readiness.failureThreshold }}
           volumeMounts:
             - name: moodle-config
-              mountPath: /var/www/html/config.php
+              mountPath: /var/www/html/public/config.php
               subPath: config.php
               readOnly: true
       volumes:
