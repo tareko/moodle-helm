@@ -47,10 +47,6 @@ spec:
             - /bin/sh
             - -ec
             - |
-              if ! php -m | grep -qi '^pgsql$'; then
-                echo "Installing missing pgsql PHP extension at container startup"
-                docker-php-ext-install -j"$(nproc)" pgsql
-              fi
               exec apache2-foreground
           env:
             - name: MOODLE_DB_HOST
