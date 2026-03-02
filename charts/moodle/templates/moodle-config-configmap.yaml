@@ -12,7 +12,7 @@ data:
     $CFG = new stdClass();
 
     $CFG->dbtype    = getenv('MOODLE_DB_TYPE') ?: 'pgsql';
-    $CFG->dblibrary = 'native';
+    $CFG->dblibrary = 'pdo';
     $CFG->dbhost    = getenv('MOODLE_DB_HOST') ?: 'localhost';
     $CFG->dbname    = getenv('MOODLE_DB_NAME') ?: 'moodle';
     $CFG->dbuser    = getenv('MOODLE_DB_USER') ?: 'moodle';
@@ -22,7 +22,8 @@ data:
       'dbpersist' => 0,
       'dbport' => getenv('MOODLE_DB_PORT') ?: '',
       'dbsocket' => '',
-      'dbcollation' => 'utf8mb4_unicode_ci',
+      // For PostgreSQL this should stay empty; MySQL/MariaDB can override via env.
+      'dbcollation' => getenv('MOODLE_DB_COLLATION') ?: '',
       'sslmode' => getenv('MOODLE_DB_SSLMODE') ?: 'require',
     );
 
