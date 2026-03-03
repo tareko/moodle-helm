@@ -14,6 +14,7 @@ RUN a2enmod rewrite headers expires
 WORKDIR /var/www/html
 
 RUN git clone --branch ${MOODLE_VERSION} --depth 1 https://github.com/moodle/moodle.git /var/www/html \
+    && rm -f /var/www/html/public/config.php \
     && chown -R www-data:www-data /var/www/html
 
 ENV APACHE_DOCUMENT_ROOT=/var/www/html/public
