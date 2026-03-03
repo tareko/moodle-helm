@@ -5,9 +5,11 @@ image:
 
 gateway:
   enabled: true
+  create: false
   className: nginx
   gatewayName: public-gateway
   gatewayNamespace: ingress-nginx
+  listenerName: https
   hostname: education.glia.org
   tls:
     enabled: true

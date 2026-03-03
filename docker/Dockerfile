@@ -5,9 +5,17 @@ ARG MOODLE_VERSION=v5.1.3
 RUN apt-get update && apt-get install -y --no-install-recommends \
     git curl unzip libzip-dev libicu-dev libxml2-dev libpng-dev libjpeg62-turbo-dev libfreetype6-dev \
     libpq-dev libonig-dev libcurl4-openssl-dev libssl-dev default-mysql-client postgresql-client ca-certificates \
+    libexif-dev \
     && docker-php-ext-configure gd --with-freetype --with-jpeg \
-    && docker-php-ext-install -j"$(nproc)" gd intl zip mysqli pgsql pdo pdo_mysql pdo_pgsql soap opcache \
+    && docker-php-ext-install -j"$(nproc)" gd intl zip mysqli pgsql pdo pdo_mysql pdo_pgsql soap opcache exif \
     && rm -rf /var/lib/apt/lists/*
+
+# Install Composer
+COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
+
+# PHP configuration for Moodle
+RUN echo "max_input_vars = 5000" >> /usr/local/etc/php/conf.d/moodle.ini \
+    && echo "zend.exception_ignore_args = On" >> /usr/local/etc/php/conf.d/moodle.ini
 
 RUN a2enmod rewrite headers expires
 
@@ -15,6 +23,7 @@ WORKDIR /var/www/html
 
 RUN git clone --branch ${MOODLE_VERSION} --depth 1 https://github.com/moodle/moodle.git /var/www/html \
     && rm -f /var/www/html/public/config.php \
+    && composer install --no-dev --classmap-authoritative --working-dir=/var/www/html \
     && chown -R www-data:www-data /var/www/html
 
 ENV APACHE_DOCUMENT_ROOT=/var/www/html/public

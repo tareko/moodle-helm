@@ -1,0 +1,20 @@
+{{- if and .Values.gateway.enabled (not .Values.gateway.create) .Values.gateway.tls.enabled }}
+{{- if ne .Values.gateway.gatewayNamespace .Release.Namespace }}
+apiVersion: gateway.networking.k8s.io/v1beta1
+kind: ReferenceGrant
+metadata:
+  name: allow-gateway-tls
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "moodle.labels" . | nindent 4 }}
+spec:
+  from:
+    - group: gateway.networking.k8s.io
+      kind: Gateway
+      namespace: {{ .Values.gateway.gatewayNamespace }}
+  to:
+    - group: ""
+      kind: Secret
+      name: {{ .Values.gateway.tls.certificateSecretName }}
+{{- end }}
+{{- end }}

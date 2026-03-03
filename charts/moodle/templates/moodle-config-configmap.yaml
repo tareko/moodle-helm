@@ -12,7 +12,7 @@ data:
     $CFG = new stdClass();
 
     $CFG->dbtype    = getenv('MOODLE_DB_TYPE') ?: 'pgsql';
-    $CFG->dblibrary = 'pdo';
+    $CFG->dblibrary = 'native';
     $CFG->dbhost    = getenv('MOODLE_DB_HOST') ?: 'localhost';
     $CFG->dbname    = getenv('MOODLE_DB_NAME') ?: 'moodle';
     $CFG->dbuser    = getenv('MOODLE_DB_USER') ?: 'moodle';
@@ -37,7 +37,6 @@ data:
 
     if (filter_var(getenv('MOODLE_SSLPROXY') ?: 'false', FILTER_VALIDATE_BOOLEAN)) {
       $CFG->sslproxy = true;
-      $CFG->reverseproxy = true;
     }
 
     require_once(__DIR__ . '/lib/setup.php');
