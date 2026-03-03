@@ -47,7 +47,6 @@ spec:
             - /bin/sh
             - -ec
             - |
-              chown www-data:www-data /var/www/html/public/config.php
               exec apache2-foreground
           env:
             - name: MOODLE_DB_HOST
