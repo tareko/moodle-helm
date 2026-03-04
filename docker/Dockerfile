@@ -5,9 +5,9 @@ ARG MOODLE_VERSION=v5.1.3
 RUN apt-get update && apt-get install -y --no-install-recommends \
     git curl unzip libzip-dev libicu-dev libxml2-dev libpng-dev libjpeg62-turbo-dev libfreetype6-dev \
     libpq-dev libonig-dev libcurl4-openssl-dev libssl-dev default-mysql-client postgresql-client ca-certificates \
-    libexif-dev \
+    libexif-dev libldap2-dev \
     && docker-php-ext-configure gd --with-freetype --with-jpeg \
-    && docker-php-ext-install -j"$(nproc)" gd intl zip mysqli pgsql pdo pdo_mysql pdo_pgsql soap opcache exif \
+    && docker-php-ext-install -j"$(nproc)" gd intl zip mysqli pgsql pdo pdo_mysql pdo_pgsql soap opcache exif ldap \
     && rm -rf /var/lib/apt/lists/*
 
 # Install Composer
