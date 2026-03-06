@@ -15,7 +15,9 @@ COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
 # PHP configuration for Moodle
 RUN echo "max_input_vars = 5000" >> /usr/local/etc/php/conf.d/moodle.ini \
-    && echo "zend.exception_ignore_args = On" >> /usr/local/etc/php/conf.d/moodle.ini
+    && echo "zend.exception_ignore_args = On" >> /usr/local/etc/php/conf.d/moodle.ini \
+    && echo "upload_max_filesize = 500M" >> /usr/local/etc/php/conf.d/moodle.ini \
+    && echo "post_max_size = 500M" >> /usr/local/etc/php/conf.d/moodle.ini
 
 RUN a2enmod rewrite headers expires
 
