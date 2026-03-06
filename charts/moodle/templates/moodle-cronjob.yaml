@@ -28,15 +28,14 @@ spec:
                 - /bin/sh
                 - -ec
                 - |
-                  cd /var/www/html/public
-                  if [ ! -f ./config.php ]; then
-                    echo "Skipping cron: /var/www/html/public/config.php is missing"
+                  if [ ! -f /var/www/html/config.php ]; then
+                    echo "Skipping cron: /var/www/html/config.php is missing"
                     exit 0
                   fi
-                  php ../admin/cli/cron.php
+                  php /var/www/html/admin/cli/cron.php
               volumeMounts:
                 - name: moodle-config
-                  mountPath: /var/www/html/public/config.php
+                  mountPath: /var/www/html/config.php
                   subPath: config.php
                   readOnly: true
               envFrom:
