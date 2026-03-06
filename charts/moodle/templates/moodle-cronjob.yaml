@@ -34,6 +34,11 @@ spec:
                     exit 0
                   fi
                   php ../admin/cli/cron.php
+              volumeMounts:
+                - name: moodle-config
+                  mountPath: /var/www/html/public/config.php
+                  subPath: config.php
+                  readOnly: true
               envFrom:
                 - configMapRef:
                     name: {{ include "moodle.fullname" . }}-env
@@ -63,5 +68,12 @@ spec:
                     secretKeyRef:
                       name: {{ .Values.postgresql.secretRef.name }}
                       key: {{ .Values.postgresql.secretRef.passwordKey }}
+          volumes:
+            - name: moodle-config
+              configMap:
+                name: {{ include "moodle.fullname" . }}-config
+                items:
+                  - key: config.php
+                    path: config.php
 {{- end }}
 
