@@ -27,6 +27,8 @@ RUN git clone --branch ${MOODLE_VERSION} --depth 1 https://github.com/moodle/moo
     && rm -f /var/www/html/public/config.php \
     && git clone --depth 1 https://github.com/Wunderbyte-GmbH/moodle-mod_booking.git /var/www/html/public/mod/booking \
     && rm -rf /var/www/html/public/mod/booking/.git \
+    && git clone --depth 1 https://github.com/Wunderbyte-GmbH/moodle-local_wunderbyte_table.git /var/www/html/public/local/wunderbyte_table \
+    && rm -rf /var/www/html/public/local/wunderbyte_table/.git \
     && composer install --no-dev --classmap-authoritative --working-dir=/var/www/html \
     && chown -R www-data:www-data /var/www/html
 
