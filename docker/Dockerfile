@@ -25,8 +25,8 @@ WORKDIR /var/www/html
 
 RUN git clone --branch ${MOODLE_VERSION} --depth 1 https://github.com/moodle/moodle.git /var/www/html \
     && rm -f /var/www/html/public/config.php \
-    && git clone --depth 1 https://github.com/Wunderbyte-GmbH/moodle-mod_booking.git /var/www/html/mod/booking \
-    && rm -rf /var/www/html/mod/booking/.git \
+    && git clone --depth 1 https://github.com/Wunderbyte-GmbH/moodle-mod_booking.git /var/www/html/public/mod/booking \
+    && rm -rf /var/www/html/public/mod/booking/.git \
     && composer install --no-dev --classmap-authoritative --working-dir=/var/www/html \
     && chown -R www-data:www-data /var/www/html
 
