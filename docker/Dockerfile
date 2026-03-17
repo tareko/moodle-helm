@@ -29,6 +29,10 @@ RUN git clone --branch ${MOODLE_VERSION} --depth 1 https://github.com/moodle/moo
     && rm -rf /var/www/html/public/mod/booking/.git \
     && git clone --depth 1 https://github.com/Wunderbyte-GmbH/moodle-local_wunderbyte_table.git /var/www/html/public/local/wunderbyte_table \
     && rm -rf /var/www/html/public/local/wunderbyte_table/.git \
+    && git clone --depth 1 https://github.com/catalyst/moodle-tool_objectfs.git /var/www/html/public/admin/tool/objectfs \
+    && rm -rf /var/www/html/public/admin/tool/objectfs/.git \
+    && git clone --depth 1 https://github.com/catalyst/moodle-local_aws.git /var/www/html/public/local/aws \
+    && rm -rf /var/www/html/public/local/aws/.git \
     && composer install --no-dev --classmap-authoritative --working-dir=/var/www/html \
     && chown -R www-data:www-data /var/www/html
 
