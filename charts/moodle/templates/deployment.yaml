@@ -83,18 +83,6 @@ spec:
                 secretKeyRef:
                   name: {{ .Values.moodle.admin.secretRef.name }}
                   key: {{ .Values.moodle.admin.secretRef.passwordKey }}
-            {{- if and .Values.spaces.enabled (eq .Values.storage.filedir.driver "s3") }}
-            - name: MOODLE_OBJECTFS_S3_KEY
-              valueFrom:
-                secretKeyRef:
-                  name: {{ .Values.spaces.credentialsSecret.name }}
-                  key: {{ .Values.spaces.credentialsSecret.accessKeyKey }}
-            - name: MOODLE_OBJECTFS_S3_SECRET
-              valueFrom:
-                secretKeyRef:
-                  name: {{ .Values.spaces.credentialsSecret.name }}
-                  key: {{ .Values.spaces.credentialsSecret.secretKeyKey }}
-            {{- end }}
             {{- with .Values.env.extra }}
             {{- toYaml . | nindent 12 }}
             {{- end }}

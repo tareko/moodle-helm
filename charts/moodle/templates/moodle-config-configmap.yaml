@@ -39,28 +39,4 @@ data:
       $CFG->sslproxy = true;
     }
 
-    // Enable S3 object storage if configured
-    if (filter_var(getenv('MOODLE_OBJECTFS_ENABLED') ?: 'false', FILTER_VALIDATE_BOOLEAN)) {
-      $CFG->alternative_file_system_class = '\\tool_objectfs\\s3_file_system';
-
-      // S3 configuration from environment variables
-      $CFG->objectfs = new stdClass();
-      $CFG->objectfs->key = getenv('MOODLE_OBJECTFS_S3_KEY') ?: '';
-      $CFG->objectfs->secret = getenv('MOODLE_OBJECTFS_S3_SECRET') ?: '';
-      $CFG->objectfs->bucket = getenv('MOODLE_OBJECTFS_S3_BUCKET') ?: '';
-      $CFG->objectfs->region = getenv('MOODLE_OBJECTFS_S3_REGION') ?: '';
-      $CFG->objectfs->endpoint = getenv('MOODLE_OBJECTFS_S3_ENDPOINT') ?: '';
-
-      // Use path-style endpoint for DigitalOcean Spaces and other S3-compatible services
-      if (filter_var(getenv('MOODLE_OBJECTFS_S3_PATH_STYLE') ?: 'false', FILTER_VALIDATE_BOOLEAN)) {
-        $CFG->objectfs->use_path_style_endpoint = true;
-      }
-
-      // Optional: Configure presigned URL expiration (default 4 hours, extend to 7 days)
-      $CFG->objectfs_presigned_url_expiry = 604800; // 7 days in seconds
-
-      // Optional: Prefer remote objects for serving (for testing, may have performance impact)
-      $CFG->objectfs->prefer_remote = false;
-    }
-
     require_once(__DIR__ . '/lib/setup.php');
