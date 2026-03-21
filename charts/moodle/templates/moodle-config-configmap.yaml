@@ -39,4 +39,7 @@ data:
       $CFG->sslproxy = true;
     }
 
+    // Enable ObjectFS - filesystem class must be set here (DB settings control credentials/behavior)
+    $CFG->alternative_file_system_class = '\\tool_objectfs\\digitalocean_file_system';
+
     require_once(__DIR__ . '/lib/setup.php');
