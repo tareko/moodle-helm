@@ -148,7 +148,7 @@ gateway:
     certificateSecretName: moodle-tls
     certManager:
       enabled: true
-      clusterIssuer: letsencrypt-prod
+      clusterIssuer: letsencrypt-prod-gandi-glia
 
 backups:
   enabled: true
