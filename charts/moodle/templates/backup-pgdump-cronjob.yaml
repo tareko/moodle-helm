@@ -31,15 +31,23 @@ spec:
                   # omitted this and the job crash-looped forever with
                   # "pg_dump: not found", so no database backups were taken).
                   # PostgreSQL server is v17, so the client major must be >= 17.
-                  apk add --no-cache postgresql17-client aws-cli >/dev/null
+                  # coreutils provides GNU date for the retention cutoff.
+                  apk add --no-cache postgresql17-client aws-cli coreutils >/dev/null
                   TS="$(date +%Y%m%d-%H%M%S)"
                   export PGPASSWORD="$DB_PASSWORD"
                   pg_dump -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" -d "$DB_NAME" -F c > /tmp/${DB_NAME}-${TS}.dump
                   aws s3 cp /tmp/${DB_NAME}-${TS}.dump s3://$BACKUP_BUCKET/postgresql/${DB_NAME}-${TS}.dump --endpoint-url "$SPACES_ENDPOINT"
-                  aws s3 ls s3://$BACKUP_BUCKET/postgresql/ --endpoint-url "$SPACES_ENDPOINT" | awk '{print $4}' | while read -r f; do
-                    [ -z "$f" ] && continue
-                    if [ "$(date -d "-${RETENTION_DAYS} days" +%s)" -ge "$(date +%s)" ]; then :; fi
-                  done
+                  # Retention: delete dumps older than RETENTION_DAYS. Dump names
+                  # embed the YYYYmmdd-HHMMSS timestamp, so comparing that stamp
+                  # to a cutoff string is sufficient (lexicographic == chronological).
+                  CUTOFF="$(date -d "-${RETENTION_DAYS} days" +%Y%m%d-%H%M%S)"
+                  aws s3 ls "s3://$BACKUP_BUCKET/postgresql/" --endpoint-url "$SPACES_ENDPOINT" \
+                    | awk -v cutoff="$CUTOFF" '{ if (match($4, /[0-9]{8}-[0-9]{6}/)) { ts=substr($4, RSTART, RLENGTH); if (ts < cutoff) print $4 } }' \
+                    | while read -r old; do
+                        [ -z "$old" ] && continue
+                        echo "Retention: removing $old (older than ${RETENTION_DAYS} days)"
+                        aws s3 rm "s3://$BACKUP_BUCKET/postgresql/$old" --endpoint-url "$SPACES_ENDPOINT"
+                      done
               env:
                 - name: DB_HOST
                   valueFrom:
