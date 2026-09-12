@@ -87,10 +87,11 @@ jobs:
       - name: Set up Helm
         uses: azure/setup-helm@v4
 
-      - name: Install doctl
-        uses: digitalocean/action-doctl@v2
-        with:
-          token: ${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}
+      # NOTE: there used to be a `digitalocean/action-doctl@v2` step here. It was
+      # never used (kubeconfig comes from KUBECONFIG_B64 below) and it hard-failed
+      # the whole deploy when the DIGITALOCEAN_ACCESS_TOKEN secret expired
+      # ("doctl auth init" validates the token and exits 1). Removed so a stale
+      # DO token can no longer block deployments.
 
       - name: Configure kubeconfig
         shell: bash
