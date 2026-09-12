@@ -26,6 +26,12 @@ spec:
                 - /bin/sh
                 - -ec
                 - |
+                  # The default image is a bare alpine, which ships neither
+                  # pg_dump nor the AWS CLI. Install them (previous versions
+                  # omitted this and the job crash-looped forever with
+                  # "pg_dump: not found", so no database backups were taken).
+                  # PostgreSQL server is v17, so the client major must be >= 17.
+                  apk add --no-cache postgresql17-client aws-cli >/dev/null
                   TS="$(date +%Y%m%d-%H%M%S)"
                   export PGPASSWORD="$DB_PASSWORD"
                   pg_dump -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" -d "$DB_NAME" -F c > /tmp/${DB_NAME}-${TS}.dump

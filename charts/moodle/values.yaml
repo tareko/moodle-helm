@@ -156,7 +156,9 @@ backups:
   retentionDays: 14
   pgdump:
     schedule: "15 2 * * *"
-    image: alpine:3.20
+    # Needs a pg_dump >= the server major version. The managed PostgreSQL is
+    # v17, so use alpine 3.21 (ships postgresql17-client) rather than 3.20 (v16).
+    image: alpine:3.21
     successfulJobsHistoryLimit: 3
     failedJobsHistoryLimit: 3
   moodleFiles:

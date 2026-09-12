@@ -7,6 +7,8 @@ on:
     paths:
       - 'charts/moodle/**'
       - 'docker/**'
+      - 'gateway/**'
+      - 'scripts/**'
       - '.github/workflows/moodle-build-and-deploy.yml'
   workflow_dispatch:
     inputs:
@@ -114,3 +116,11 @@ jobs:
           K8S_NAMESPACE: ${{ vars.K8S_NAMESPACE || 'moodle' }}
           IMAGE_REPOSITORY: ${{ needs.build-and-push.outputs.image_repo }}
           IMAGE_TAG: ${{ needs.build-and-push.outputs.image_tag }}
+
+      # The chart's HTTPRoute attaches to a listener on the shared
+      # `public-gateway`, which this repo does not own. Re-assert that listener
+      # on every deploy so it cannot silently vanish again (it did in Aug 2026,
+      # orphaning the route and taking education.glia.org offline).
+      - name: Ensure shared gateway listener
+        shell: bash
+        run: ./scripts/ensure-gateway-listener.sh
