@@ -1,6 +1,6 @@
 FROM php:8.2-apache
 
-ARG MOODLE_VERSION=v5.1.3
+ARG MOODLE_VERSION=v5.1.8
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
     git curl unzip libzip-dev libicu-dev libxml2-dev libpng-dev libjpeg62-turbo-dev libfreetype6-dev \
