@@ -14,10 +14,13 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
 # PHP configuration for Moodle
+# CVE-2026-109618/109619 ("php2shell"): rebuild picks up php:8.2-apache >= 8.2.35.
+# session.upload_progress is unused by Moodle; disable it (advisory interim hardening).
 RUN echo "max_input_vars = 5000" >> /usr/local/etc/php/conf.d/moodle.ini \
     && echo "zend.exception_ignore_args = On" >> /usr/local/etc/php/conf.d/moodle.ini \
     && echo "upload_max_filesize = 500M" >> /usr/local/etc/php/conf.d/moodle.ini \
-    && echo "post_max_size = 500M" >> /usr/local/etc/php/conf.d/moodle.ini
+    && echo "post_max_size = 500M" >> /usr/local/etc/php/conf.d/moodle.ini \
+    && echo "session.upload_progress.enabled = 0" >> /usr/local/etc/php/conf.d/moodle.ini
 
 RUN a2enmod rewrite headers expires
 
